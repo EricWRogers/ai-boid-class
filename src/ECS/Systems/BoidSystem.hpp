@@ -43,6 +43,12 @@ private:
         return glm::normalize(seek);
     }
 
+    glm::vec2 Flee(glm::vec2 _agentPosition, glm::vec2 _targetPosition)
+    {
+        glm::vec2 seek =  _agentPosition - _targetPosition;
+        return glm::normalize(seek);
+    }
+
     glm::vec2 Alignment(entt::entity _agent, glm::vec2 _agentPosition, entt::registry &_registry)
     {
         glm::vec2 alignment = glm::vec2(0.0f);
@@ -185,7 +191,7 @@ public:
             
 
             // SEEK
-            seekTarget = Seek(rect_transform.position, inputManager->mouse+(cameraPosition-(glm::vec2(window->GetScreenWidth(), window->GetScreenHeight())/2.0f)));
+            seekTarget = Flee(rect_transform.position, inputManager->mouse+(cameraPosition-(glm::vec2(window->GetScreenWidth(), window->GetScreenHeight())/2.0f)));
             // Alignment
             alignmentTarget = Alignment( entity, rect_transform.position, _registry);
             // Cohesion
@@ -228,103 +234,3 @@ bool DecodeBoidSystem(const std::string &_name, Canis::Scene *_scene)
     }
     return false;
 }
-
-/*
-void UpdateComponents(const float deltaTime, entt::_registry &_registry)
-{
-    glm::vec2 seekTarget, alignmentTarget, cohesionTarget, separationTarget, cameraPosition;
-
-    delete quadTree;
-    quadTree = nextQuadTree;
-    nextQuadTree = new Canis::QuadTree(glm::vec2(0.0f), 2560.0f);
-
-    auto view = _registry.view<Canis::RectTransformComponent, BoidComponent>();
-    auto cam = _registry.view<const Canis::Camera2DComponent>();
-
-    float cameraSize;
-    for (auto [entity, camera2D] : cam.each())
-    {
-        cameraPosition = camera2D.position;
-        cameraSize = camera2D.scale;
-    }
-
-    mouseWorldPosition = (input->mouse*2.0f) + cameraPosition-(glm::vec2(window->GetScreenWidth()*2.0f, window->GetScreenHeight()*2.0f)/2.0f);
-
-    glm::vec2 alignment = glm::vec2(0.0f);
-    glm::vec2 cohesion = glm::vec2(0.0f);
-    glm::vec2 separation = glm::vec2(0.0f);
-    glm::vec2 acceleration;
-
-    int alignNumNeighbors = 0;
-    int cohNumNeighbors = 0;
-    int sepNumNeighbors = 0;
-
-    float distance = 0.0f;
-
-    std::vector<Canis::QuadPoint> quadPoints = {};
-
-    for (auto [entity, rect_transform, boid] : view.each())
-    {
-        alignment = glm::vec2(0.0f);
-        cohesion = glm::vec2(0.0f);
-        separation = glm::vec2(0.0f);
-        // glm::vec2 mouseWorldPosition = input->mouse+(cameraPosition-(glm::vec2(window->GetScreenWidth(), window->GetScreenHeight())/2.0f));
-        alignNumNeighbors = 0;
-        cohNumNeighbors = 0;
-
-        quadPoints.clear(); // does not unalocate the memory
-        if (quadTree->PointsQuery(rect_transform.position, MAX_COHESION_DISTANCE+0.0f, quadPoints))
-        {
-            for (Canis::QuadPoint point : quadPoints)
-            {
-                distance = glm::distance(rect_transform.position, point.position);
-                if (distance <= MAX_COHESION_DISTANCE && entity != point.entity)
-                {
-                    cohNumNeighbors++;
-                    cohesion += point.position;
-
-                    if (distance <= MAX_ALIGNMENT_DISTANCE)
-                    {
-                        alignNumNeighbors++;
-                        alignment += _registry.get<const BoidComponent>(point.entity).velocity;
-
-                        if (distance <= MAX_SEPARATION_DISTANCE)
-                        {
-                            separation += (rect_transform.position - point.position);
-                        }
-                    }
-                }
-            }
-        }
-        
-        // Seek
-        seekTarget = glm::normalize(mouseWorldPosition - rect_transform.position);
-        // Alignment
-        alignmentTarget = (alignment != glm::vec2(0.0f)) ? glm::normalize(alignment / (alignNumNeighbors + 0.0f)) : glm::vec2(0.0f);
-        // Cohesion
-        cohesionTarget = (cohNumNeighbors > 0) ? glm::normalize((cohesion/static_cast<float>(cohNumNeighbors)) - rect_transform.position) : glm::vec2(0.0f);
-        // Separation
-        separationTarget = (separation != glm::vec2(0.0f)) ? glm::normalize(separation) : glm::vec2(0.0f);
-
-        acceleration = ((seekTarget * USER_BEHAVIOR_WEIGHT) +
-                            (alignmentTarget * ALIGNMENT_WEIGHT) +
-                            (cohesionTarget * COHESION_WEIGHT) +
-                            (separationTarget * SEPARATION_WEIGHT))
-                            * SPEED_MULTIPLIER;
-
-        rect_transform.rotation = glm::atan(boid.velocity.y, boid.velocity.x);
-        
-
-        // update velocity
-        boid.velocity += (acceleration * deltaTime);
-
-        // apply drag
-        boid.velocity *= DRAG;
-
-        // update position
-        rect_transform.position += boid.velocity;
-        
-        nextQuadTree->AddPoint(rect_transform.position, entity);
-    }
-}
-*/
