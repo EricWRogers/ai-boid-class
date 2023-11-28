@@ -37,19 +37,19 @@ const float MAXSPEED = 40.0f;
 class BoidSystem : public Canis::System
 {
 private:
-    glm::vec2 Seek(glm::vec2 _agentPosition, glm::vec2 _targetPosition)
+    glm::vec2 Seek(glm::vec2 &_agentPosition, glm::vec2 _targetPosition)
     {
         glm::vec2 seek = _targetPosition - _agentPosition;
         return glm::normalize(seek);
     }
 
-    glm::vec2 Flee(glm::vec2 _agentPosition, glm::vec2 _targetPosition)
+    glm::vec2 Flee(glm::vec2 &_agentPosition, glm::vec2 _targetPosition)
     {
         glm::vec2 seek =  _agentPosition - _targetPosition;
         return glm::normalize(seek);
     }
 
-    glm::vec2 Alignment(entt::entity _agent, glm::vec2 _agentPosition, entt::registry &_registry)
+    glm::vec2 Alignment(entt::entity &_agent, glm::vec2 &_agentPosition, entt::registry &_registry)
     {
         glm::vec2 alignment = glm::vec2(0.0f);
         int numNeighbors = 0;
@@ -75,7 +75,7 @@ private:
         return glm::vec2(0.0f);
     }
 
-    glm::vec2 Cohesion(entt::entity _agent, glm::vec2 _agentPosition, entt::registry &_registry)
+    glm::vec2 Cohesion(entt::entity &_agent, glm::vec2 &_agentPosition, entt::registry &_registry)
     {
         glm::vec2 cohesion = glm::vec2(0.0f);
         int numNeighbors = 0;
@@ -98,7 +98,7 @@ private:
         return glm::normalize((cohesion - _agentPosition));
     }
 
-    glm::vec2 Separation(entt::entity _agent, glm::vec2 _agentPosition, entt::registry &_registry)
+    glm::vec2 Separation(entt::entity &_agent, glm::vec2 &_agentPosition, entt::registry &_registry)
     {
         glm::vec2 separation = glm::vec2(0.0f);
         int numNeighbors = 0;
@@ -130,6 +130,8 @@ public:
 
     glm::vec2 mouseWorldPosition;
 
+    glm::vec2 seekTarget, alignmentTarget, cohesionTarget, separationTarget, cameraPosition;
+
     BoidSystem() : Canis::System() {
 
     }
@@ -146,7 +148,7 @@ public:
     void Ready()
     {
         Canis::GLTexture shipImage = Canis::AssetManager::GetTexture("assets/textures/PlayerShip.png")->GetTexture();
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < 1000; i++)
         {
             glm::vec2 size = glm::vec2(shipImage.width/8,shipImage.height/8);
             float x = rand() % window->GetScreenWidth() + 1.0f;
@@ -178,49 +180,97 @@ public:
 
     void Update(entt::registry &_registry, float _deltaTime)
     {
-        glm::vec2 seekTarget, alignmentTarget, cohesionTarget, separationTarget, cameraPosition;
+        delete quadTree;
+        quadTree = nextQuadTree;
+        nextQuadTree = new Canis::QuadTree(glm::vec2(0.0f), 2560.0f);
 
-        auto cam = _registry.view<Canis::Camera2DComponent>();
-        for(auto[entity, camera2D] : cam.each()) {
+        auto view = _registry.view<Canis::RectTransformComponent, BoidComponent>();
+        auto cam = _registry.view<const Canis::Camera2DComponent>();
+
+        float cameraSize;
+        for (auto [entity, camera2D] : cam.each())
+        {
             cameraPosition = camera2D.position;
+            cameraSize = camera2D.scale;
         }
 
-        auto view = _registry.view<Canis::RectTransformComponent, Canis::ColorComponent, Canis::Sprite2DComponent, BoidComponent>();
-        for (auto [entity, rect_transform, color, sprite, boid] : view.each())
+        mouseWorldPosition = (inputManager->mouse*2.0f) + cameraPosition-(glm::vec2(window->GetScreenWidth()*2.0f, window->GetScreenHeight()*2.0f)/2.0f);
+
+        glm::vec2 alignment = glm::vec2(0.0f);
+        glm::vec2 cohesion = glm::vec2(0.0f);
+        glm::vec2 separation = glm::vec2(0.0f);
+        glm::vec2 acceleration;
+
+        int alignNumNeighbors = 0;
+        int cohNumNeighbors = 0;
+        int sepNumNeighbors = 0;
+
+        float distance = 0.0f;
+
+        std::vector<Canis::QuadPoint> quadPoints = {};
+
+        for (auto [entity, rect_transform, boid] : view.each())
         {
-            
+            alignment = glm::vec2(0.0f);
+            cohesion = glm::vec2(0.0f);
+            separation = glm::vec2(0.0f);
+            // glm::vec2 mouseWorldPosition = input->mouse+(cameraPosition-(glm::vec2(window->GetScreenWidth(), window->GetScreenHeight())/2.0f));
+            alignNumNeighbors = 0;
+            cohNumNeighbors = 0;
 
-            // SEEK
-            seekTarget = Flee(rect_transform.position, inputManager->mouse+(cameraPosition-(glm::vec2(window->GetScreenWidth(), window->GetScreenHeight())/2.0f)));
+            quadPoints.clear(); // does not unalocate the memory
+            if (quadTree->PointsQuery(rect_transform.position, MAX_COHESION_DISTANCE+0.0f, quadPoints))
+            {
+                for (Canis::QuadPoint point : quadPoints)
+                {
+                    distance = glm::distance(rect_transform.position, point.position);
+                    if (distance <= MAX_COHESION_DISTANCE && entity != point.entity)
+                    {
+                        cohNumNeighbors++;
+                        cohesion += point.position;
+
+                        if (distance <= MAX_ALIGNMENT_DISTANCE)
+                        {
+                            alignNumNeighbors++;
+                            alignment += _registry.get<const BoidComponent>(point.entity).velocity;
+
+                            if (distance <= MAX_SEPARATION_DISTANCE)
+                            {
+                                separation += (rect_transform.position - point.position);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Seek
+            seekTarget = glm::normalize(mouseWorldPosition - rect_transform.position);
             // Alignment
-            alignmentTarget = Alignment( entity, rect_transform.position, _registry);
+            alignmentTarget = (alignment != glm::vec2(0.0f)) ? glm::normalize(alignment / (alignNumNeighbors + 0.0f)) : glm::vec2(0.0f);
             // Cohesion
-            cohesionTarget = Cohesion(entity, rect_transform.position, _registry);
+            cohesionTarget = (cohNumNeighbors > 0) ? glm::normalize((cohesion/static_cast<float>(cohNumNeighbors)) - rect_transform.position) : glm::vec2(0.0f);
             // Separation
-            separationTarget = Separation(entity, rect_transform.position, _registry);
-            
-            boid.acceleration = (seekTarget * USER_BEHAVIOR_WEIGHT) + 
-                                (alignmentTarget * ALIGNMENT_WEIGHT) + 
-                                (cohesionTarget * COHESION_WEIGHT) + 
-                                (separationTarget * SEPARATION_WEIGHT);
+            separationTarget = (separation != glm::vec2(0.0f)) ? glm::normalize(separation) : glm::vec2(0.0f);
 
+            acceleration = ((seekTarget * USER_BEHAVIOR_WEIGHT) +
+                                (alignmentTarget * ALIGNMENT_WEIGHT) +
+                                (cohesionTarget * COHESION_WEIGHT) +
+                                (separationTarget * SEPARATION_WEIGHT))
+                                * SPEED_MULTIPLIER;
+
+            rect_transform.rotation = glm::atan(boid.velocity.y, boid.velocity.x);
             
-            rect_transform.rotation = atan2(boid.velocity.y,boid.velocity.x);
 
             // update velocity
-            boid.velocity += boid.acceleration;
-
-            // clamp velocity to maxSpeed
-            if (glm::length(boid.velocity) > boid.maxSpeed) {
-                boid.velocity = glm::normalize(boid.velocity);
-                boid.velocity *= boid.maxSpeed;
-            }
+            boid.velocity += (acceleration * _deltaTime);
 
             // apply drag
-            boid.velocity *= boid.drag;
+            boid.velocity *= DRAG;
 
             // update position
             rect_transform.position += boid.velocity;
+            
+            nextQuadTree->AddPoint(rect_transform.position, entity, boid.velocity);
         }
     }
 };
