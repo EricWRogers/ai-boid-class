@@ -1,0 +1,37 @@
+Scene: game_of_life
+Systems:
+  - Canis::ButtonSystem
+  - Canis::CollisionSystem2D
+  - Canis::SpriteAnimationSystem
+  - GameOfLifeSystem
+RenderSystems:
+  - Canis::SpriteRenderer2DSystem
+  - Canis::RenderHUDSystem
+Entities:
+  - 0:
+    Canis::Camera2DComponent:
+      position: [632.0, 392.0]
+      scale: 1.0
+    Canis::ScriptComponent: DebugCamera2D
+  - 1:
+    Canis::TagComponent: TITLE
+    Canis::RectTransformComponent:
+      active: true
+      anchor: 6
+      position: [30.0, 30.0]
+      size: [0.0, 0.0]
+      originOffset: [0.0, 0.0]
+      rotation: 0.0
+      scale: 1.0
+      depth: 0.0
+    Canis::ColorComponent:
+      color: [1.0, 0.0, 0.0, 1.0]
+    Canis::TextComponent:
+      assetId:
+        path: "assets/fonts/Antonio-Bold.ttf"
+        size: 48
+      text: Game of Life Demo | Paused
+      alignment: 0
+  - 2:
+    Canis::TagComponent: Boards
+    Canis::ScriptComponent: GameOfLifeLoader

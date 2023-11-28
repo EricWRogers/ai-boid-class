@@ -1,0 +1,60 @@
+Scene: sprite_demo
+Systems:
+  - Canis::ButtonSystem
+  - Canis::CollisionSystem2D
+  - Canis::SpriteAnimationSystem
+RenderSystems:
+  - Canis::SpriteRenderer2DSystem
+  - Canis::RenderHUDSystem
+Entities:
+  - 0:
+    Canis::Camera2DComponent:
+      position: [0.0, 0.0]
+      scale: 1.0
+    Canis::ScriptComponent: DebugCamera2D
+  - 1:
+    Canis::RectTransformComponent:
+      active: true
+      anchor: 6
+      position: [30.0, 30.0]
+      size: [0.0, 0.0]
+      originOffset: [0.0, 0.0]
+      rotation: 0.0
+      scale: 1.0
+      depth: 0.1
+    Canis::ColorComponent:
+      color: [0.0, 1.0, 1.0, 1.0]
+    Canis::TextComponent:
+      assetId:
+        path: "assets/fonts/Antonio-Bold.ttf"
+        size: 48
+      text: Sprite Demo
+      alignment: 0
+  - 2:
+    Canis::RectTransformComponent:
+      active: true
+      anchor: 6
+      position: [0.0, 0.0]
+      size: [480.0, 500.0]
+      originOffset: [0.0, 0.0]
+      rotation: 0
+      scale: 1.0
+      depth: 0.1
+    Canis::ColorComponent:
+      color: [1.0, 1.0, 1.0, 1.0]
+    Canis::Sprite2DComponent:
+      uv: [0.16, 0.0, 0.16, 0.24]
+      texture: "assets/textures/All.png"
+    Canis::SpriteAnimationComponent:
+      animationId: "assets/animations/character.anim"
+      countDown: 0.0
+      index: 0
+      flipX: false
+      flipY: false
+      speed: 1.0
+    Canis::CircleColliderComponent:
+      center: [0.0, 0.0]
+      radius: 128.0
+      layer: 0
+      mask: 0
+    Canis::ScriptComponent: BeachBall

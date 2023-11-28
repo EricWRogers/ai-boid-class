@@ -1,1 +1,1 @@
-# ai-boid-class
+# canis-testing
