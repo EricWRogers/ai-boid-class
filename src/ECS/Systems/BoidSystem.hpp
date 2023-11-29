@@ -43,7 +43,7 @@ struct BoidThreadInfo
     void *boidSystem;
     entt::registry *reg;
     std::vector<entt::entity> *boids;
-    Canis::QuadTree *quadTree;
+    Canis::QuadTree::QuadTreeData *quadTree;
     unsigned int startIndex = 0;
     unsigned int endIndex = 0;
     glm::vec2 mouseWorldPosition;
@@ -65,7 +65,7 @@ static int BoidThreadUpdate(void *_info)
     int sepNumNeighbors = 0;
 
     float distance = 0.0f;
-    std::vector<Canis::QuadPoint> quadPoints = {};
+    std::vector<Canis::QuadTree::QuadPoint> quadPoints = {};
 
     int max = boidThreadInfo->endIndex;
     for (int i = boidThreadInfo->startIndex; i < max; i++)
@@ -85,7 +85,7 @@ static int BoidThreadUpdate(void *_info)
         cohNumNeighbors = 0;
 
         quadPoints.clear(); // does not unalocate the memory
-        if (boidThreadInfo->quadTree->PointsQuery(rect_transform.position, MAX_COHESION_DISTANCE + 0.0f, quadPoints))
+        if (Canis::QuadTree::PointsQuery(*(boidThreadInfo->quadTree), rect_transform.position, MAX_COHESION_DISTANCE + 0.0f, quadPoints))
         {
             int quadPointSize = quadPoints.size();
             for (int p = 0; p < quadPointSize; p++)//Canis::QuadPoint point : quadPoints)
@@ -152,8 +152,8 @@ private:
     
 
 public:
-    Canis::QuadTree *quadTree = new Canis::QuadTree(glm::vec2(0.0f), 2560.0f);
-    Canis::QuadTree *nextQuadTree = new Canis::QuadTree(glm::vec2(0.0f), 2560.0f);
+    Canis::QuadTree::QuadTreeData *quadTree = new Canis::QuadTree::QuadTreeData;;
+    Canis::QuadTree::QuadTreeData *nextQuadTree = new Canis::QuadTree::QuadTreeData;;
 
     float dt;
     entt::registry *reg;
@@ -197,7 +197,7 @@ public:
 
     Canis::InputManager *input;
 
-    float boidCount = 10000;
+    float boidCount = 50000;
 
     BoidThreadInfo BuildInfo(float boidCount, float threadCount, float currentThread) {
         BoidThreadInfo boidThreadInfo;
@@ -215,16 +215,18 @@ public:
     glm::vec2 seekTarget, alignmentTarget, cohesionTarget, separationTarget;
 
     BoidSystem() : Canis::System() {
-
+        Canis::QuadTree::Init(*quadTree, glm::vec2(0.0f), 2560.0f);
+        Canis::QuadTree::Init(*nextQuadTree, glm::vec2(0.0f), 2560.0f);
     }
 
     ~BoidSystem() {
-
+        delete quadTree;
+        delete nextQuadTree;
     }
 
     void Create()
     {
-
+        
     }
 
     void Ready()
@@ -264,10 +266,10 @@ public:
 
     void Update(entt::registry &_registry, float _deltaTime)
     {
-        Canis::QuadTree *tempTree = quadTree;
+        Canis::QuadTree::QuadTreeData *tempTree = quadTree;
         quadTree = nextQuadTree;
         nextQuadTree = tempTree;
-        nextQuadTree->Reset();
+        Canis::QuadTree::Reset(*nextQuadTree);
 
         dt = _deltaTime;
         reg = &_registry;
@@ -355,7 +357,7 @@ public:
         auto view = _registry.view<const Canis::RectTransformComponent, const BoidComponent>();
         for (auto [entity, rect_transform, boid] : view.each())
         {
-            nextQuadTree->AddPoint(rect_transform.position, entity, boid.velocity);
+            Canis::QuadTree::AddPoint(*nextQuadTree, rect_transform.position, entity, boid.velocity);
         }
 
         int threadReturnValue00;
