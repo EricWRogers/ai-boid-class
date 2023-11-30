@@ -192,7 +192,7 @@ public:
 
     Canis::InputManager *input;
 
-    float boidCount = 200000;
+    float boidCount = 10000;
 
     BoidThreadInfo BuildInfo(float boidCount, float threadCount, float currentThread) {
         BoidThreadInfo boidThreadInfo;
@@ -276,7 +276,7 @@ public:
             cameraSize = camera2D.scale;
         }
 
-        mouseWorldPosition = (input->mouse * 2.0f) + cameraPosition - (glm::vec2(window->GetScreenWidth() * 2.0f, window->GetScreenHeight() * 2.0f) / 2.0f);
+        mouseWorldPosition = inputManager->mouse+(cameraPosition-(glm::vec2(window->GetScreenWidth(), window->GetScreenHeight())/2.0f));
         float threadCount = 32;
 
         BoidThreadInfo threadInfoID00 = BuildInfo(boidCount,threadCount,0);
