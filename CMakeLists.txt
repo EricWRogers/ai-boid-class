@@ -6,10 +6,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_SOURCE_DIR}/dist/${CMAKE_SYSTEM_N
 set(ASSETS_DIR_NAME assets)
 
 add_definitions(
-    -c
-    -msse2
-    -mavx
-    -mavx2
+    #-c
+    #-msse2
+    #-mavx
+    #-mavx2
     #-mavx512vl
     #-mavx512f
     #-march=skylake-avx512
