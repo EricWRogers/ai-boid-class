@@ -10,9 +10,9 @@ add_definitions(
     -msse2
     -mavx
     -mavx2
-    -mavx512vl
-    -mavx512f
-    -march=skylake-avx512
+    #-mavx512vl
+    #-mavx512f
+    #-march=skylake-avx512
     #-O
     #-ftime-report
     #-Ofast
