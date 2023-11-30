@@ -66,16 +66,11 @@ static int BoidThreadUpdate(void *_info)
 
     float distance = 0.0f;
     std::vector<Canis::QuadTree::QuadPoint> quadPoints = {};
+    std::vector<unsigned int> queue = {};
 
     int max = boidThreadInfo->endIndex;
     for (int i = boidThreadInfo->startIndex; i < max; i++)
     {
-        /*if (!boidThreadInfo->reg->valid((*boidThreadInfo->boids)[i]))
-            continue;
-        if (!boidThreadInfo->reg->all_of<Canis::RectTransformComponent>((*boidThreadInfo->boids)[i]))
-            continue;
-        if (!boidThreadInfo->reg->all_of<BoidComponent>((*boidThreadInfo->boids)[i]))
-            continue;*/
         auto [rect_transform, boid] = boidThreadInfo->reg->get<Canis::RectTransformComponent, BoidComponent>((*boidThreadInfo->boids)[i]);
         alignment = glm::vec2(0.0f);
         cohesion = glm::vec2(0.0f);
@@ -85,7 +80,7 @@ static int BoidThreadUpdate(void *_info)
         cohNumNeighbors = 0;
 
         quadPoints.clear(); // does not unalocate the memory
-        if (Canis::QuadTree::PointsQuery(*(boidThreadInfo->quadTree), rect_transform.position, MAX_COHESION_DISTANCE + 0.0f, quadPoints))
+        if (Canis::QuadTree::PointsQueryFast(*(boidThreadInfo->quadTree), queue, rect_transform.position, MAX_COHESION_DISTANCE + 0.0f, quadPoints))
         {
             int quadPointSize = quadPoints.size();
             for (int p = 0; p < quadPointSize; p++)//Canis::QuadPoint point : quadPoints)
@@ -197,7 +192,7 @@ public:
 
     Canis::InputManager *input;
 
-    float boidCount = 50000;
+    float boidCount = 200000;
 
     BoidThreadInfo BuildInfo(float boidCount, float threadCount, float currentThread) {
         BoidThreadInfo boidThreadInfo;
@@ -253,11 +248,7 @@ public:
                 shipImage // texture
             );
             e.AddComponent<BoidComponent>(
-                glm::vec2(0.0f, 0.0f), // velocity
-                glm::vec2(0.0f, 0.0f), // acceleration
-                0.95f, // drag
-                0.0f, // speed
-                8.0f  // maxSpeed
+                glm::vec2(0.0f, 0.0f) // velocity
             );
 
             boidEntities.push_back(e.entityHandle);
@@ -425,38 +416,38 @@ public:
         int threadReturnValue31;
         SDL_WaitThread(threadID31, &threadReturnValue31);
 
-        threadID00 = 0;
-        threadID01 = 0;
-        threadID02 = 0;
-        threadID03 = 0;
-        threadID04 = 0;
-        threadID05 = 0;
-        threadID06 = 0;
-        threadID07 = 0;
-        threadID08 = 0;
-        threadID09 = 0;
-        threadID10 = 0;
-        threadID11 = 0;
-        threadID12 = 0;
-        threadID13 = 0;
-        threadID14 = 0;
-        threadID15 = 0;
-        threadID16 = 0;
-        threadID17 = 0;
-        threadID18 = 0;
-        threadID19 = 0;
-        threadID20 = 0;
-        threadID21 = 0;
-        threadID22 = 0;
-        threadID23 = 0;
-        threadID24 = 0;
-        threadID25 = 0;
-        threadID26 = 0;
-        threadID27 = 0;
-        threadID28 = 0;
-        threadID29 = 0;
-        threadID30 = 0;
-        threadID31 = 0;
+        threadID00 = nullptr;
+        threadID01 = nullptr;
+        threadID02 = nullptr;
+        threadID03 = nullptr;
+        threadID04 = nullptr;
+        threadID05 = nullptr;
+        threadID06 = nullptr;
+        threadID07 = nullptr;
+        threadID08 = nullptr;
+        threadID09 = nullptr;
+        threadID10 = nullptr;
+        threadID11 = nullptr;
+        threadID12 = nullptr;
+        threadID13 = nullptr;
+        threadID14 = nullptr;
+        threadID15 = nullptr;
+        threadID16 = nullptr;
+        threadID17 = nullptr;
+        threadID18 = nullptr;
+        threadID19 = nullptr;
+        threadID20 = nullptr;
+        threadID21 = nullptr;
+        threadID22 = nullptr;
+        threadID23 = nullptr;
+        threadID24 = nullptr;
+        threadID25 = nullptr;
+        threadID26 = nullptr;
+        threadID27 = nullptr;
+        threadID28 = nullptr;
+        threadID29 = nullptr;
+        threadID30 = nullptr;
+        threadID31 = nullptr;
     }
 };
 

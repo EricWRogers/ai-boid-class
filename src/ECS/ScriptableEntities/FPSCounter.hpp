@@ -37,7 +37,9 @@ public:
 
         Canis::RectTransformComponent &rectComponent = GetComponent<Canis::RectTransformComponent>();
         Canis::TextComponent &textComponent = GetComponent<Canis::TextComponent>();
-        Canis::Text::Set(textComponent, rectComponent, "FPS : " + std::to_string((int)m_Entity.scene->window->fps));
+        Canis::Text::Set(textComponent, rectComponent, "FPS : " + std::to_string((int)m_Entity.scene->window->fps) +
+                " UT : " + std::to_string((float)((Canis::SceneManager*)(GetScene().sceneManager))->updateTime) +
+                " DT : " + std::to_string((float)((Canis::SceneManager*)(GetScene().sceneManager))->drawTime));
         
         //auto *sceneManager = (Canis::SceneManager*)(m_Entity.scene->sceneManager);
         //Canis::Text::Set(textComponent, rectComponent,
